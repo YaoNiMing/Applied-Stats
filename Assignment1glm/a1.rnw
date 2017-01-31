@@ -1,0 +1,507 @@
+\documentclass[12pt]{article}
+\usepackage{hyperref}
+\usepackage[backend=bibtex, sorting=none]{biblatex}
+\bibliography{references}
+ 
+\begin{filecontents*}{references.bib}
+@Manual{knitr2013,
+    title = {knitr: A general-purpose package for dynamic report
+      generation in R},
+    author = {Yihui Xie},
+    year = {2013},
+    note = {R package version 1.4.1},
+    url = {http://yihui.name/knitr/},
+  }
+\end{filecontents*}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath,amsthm,amssymb,amsfonts,bbm}
+\usepackage{float}
+\usepackage{subcaption}
+\usepackage{longtable}
+\usepackage{booktabs}
+\renewcommand{\thesubsection}{\arabic{subsection}}
+
+\title{Applied Statitistic - Assignment 1}
+\author{Peiliang Guo}
+\date{Jan 1, 2017}
+
+\begin{document}
+
+\maketitle
+\section*{Short Answer}
+\subsection*{Simulation study}
+<<echo=FALSE>>=
+knitr::read_chunk('s1simulation.R')
+@
+The following chunk of code is used to simulate 100 datasets of length 40, each generated from a \textbf{Poisson distribution} with $\lambda=0.5+0.2x$, with the same $x$ vector \\
+<<s1,warning=FALSE,message=FALSE>>=
+@
+\begin{enumerate}
+\item When Poisson regression model is fited on each of the 100 datasets, $\Sexpr{count_beta_x}$ have their estimation on $x$ within the 2 standard error confidence interval.Therefore, the coverage probability of the 2 standard error confidence interval of the cofficient on $x$ is $\Sexpr{count_beta_x/100}$. This can be a indicator that the $95\%$ confidence interval can be constructed from the $2$ standard error confidence interval.
+\item To test the normality of the coefficient on $x$ across different datasets, we plot the histogram and the normal-QQ plot below.
+\begin{figure}[H]
+<<echo=FALSE, dev.args=list(pointsize=8),fig.width=8, fig.height=5>>=
+attach(mtcars)
+par(mfrow=c(1,2))
+hist(beta_x,probability = TRUE,breaks=15)
+curve(dnorm(x,mean=0.2,sd=sd(beta_x)),add=TRUE,col='red')
+legend(0.24,20,'N(mu=0.2)',lty=1,col='red')
+qqnorm(beta_x)
+qqline(beta_x,col='red')
+@
+\caption{Histogram and Normal QQ plot of the coefficient on x from fitted Poisson Regression model on 100 simulated datasets.}
+\end{figure}
+From the histogram above, we observe that the distribution of coefficient on $x$ is reasonably close the density of a normal distribution with mean at $0.2$. Also, the Normal-QQ plot is close to a straight line, indicating that $\hat{\beta}$ coefficient for $x$ is well approximated by a Normal distribution centred on $0.2$.
+\item To test the hypothesis of $\beta_1=0.2$, we perform a likelihood ratio test between the original Poisson regression model with $\lambda_i=\beta_1 x_i+\beta_0$ and the constrained Poisson regression model with $\lambda_i=0.2 x_i + \beta_0$. If the value of $\beta_1$ is indeed 0.2, the likelihood ratio should follow a $\chi^2_1$ distribution. Within each iteration of the 100 loops, the likelihood ratio between the original model and the constrained model is calculated, and the distribution (histogram) of likelihood ratio is ploted below
+\begin{figure}[H]
+<<echo=FALSE,dev.args=list(pointsize=8),fig.width=5, fig.height=5>>=
+hist(fit_lr,probability = TRUE,breaks=20,main = 'Likelihood Ratio Histogram')
+curve(dchisq(x,df=1),col='red',add=TRUE)
+legend(8,0.9,'Chisq w/ df 1',lty=1,col='red')
+@
+\caption{Histogram of the likelihood ratios between the original model with $\lambda_i = \beta_1 x_i + \beta_0$ vs. the constrained model with $\lambda_i = 0.2 x_i+\beta_0$}
+\end{figure}
+From the figure above, the distribution of the likelihood ratio is very close to the density of the $\chi^2$ distribution with $1$ degree of freedom. This means that we accept the hypothesis of $\beta_1=0.2$.
+\end{enumerate}
+\newpage
+\subsection*{Distribution functions}
+\begin{enumerate}
+  \item \begin{itemize}
+  \item For zero-inflated Poisson with Poisson mean $\lambda$ and extra zero proabability $\pi$, 
+    \begin{align*}
+      \mathbf{E}[ZIP(\pi,\lambda)] &= (1-\pi)\lambda = 2\\
+      \mathrm{Var}(ZIP(\pi,\lambda)) &= \mathbf{E}[ZIP(\pi,\lambda)^2]-\mathbf{E}[ZIP(\pi,\lambda)]^2\\
+        &=(1-\pi)(\lambda^2+\lambda)-[(1-\pi)\lambda]^2\\
+        &=\lambda(1-\pi)(1+\lambda\pi)= 3\\
+        \Longrightarrow & 1+\lambda\pi = \frac{3}{2}, \lambda-\lambda\pi = 2\\
+        \Longrightarrow & \lambda = \frac{5}{2}, \pi = \frac{1}{5}
+    \end{align*}
+    <<echo=FALSE>>=
+      zip_lambda = 5/2
+      zip_pi = 1/5
+    @
+    Therefore, we have the Poisson mean equal to $\Sexpr{zip_lambda}$ and extra zero probability of $\Sexpr{zip_pi}$.
+  \item For Gamma distribution with shape $\alpha$ and rate $\beta$,
+    \begin{align*}
+      \mathbf{E}[Gamma(\alpha,\beta)] &= \frac{\alpha}{\beta} = 2\\
+      \mathrm{Var}(Gamma(\alpha,\beta)) &= \frac{\alpha}{\beta^2} = 3\\
+        \Longrightarrow & \frac{\frac{\alpha}{\beta}}{\frac{\alpha}{\beta^2}} = \frac{2}{3} \Longrightarrow \beta = \frac{2}{3}\\
+        \Longrightarrow & \alpha = \frac{4}{3}
+    \end{align*}
+    <<echo=FALSE>>=
+      gamma_alpha = 4/3
+      gamma_beta = 2/3
+    @
+    Therefore, the shape of the Gamma distribution is $\Sexpr{round(gamma_alpha,3)}$ and with rate $\Sexpr{round(gamma_beta,3)}$.
+  \item For Weibull distribution with shape $k$ and scale $\lambda$
+    \begin{align*}
+      \mathbf{E}[Weibull(k,\lambda)] &= \lambda\Gamma\left(1+\frac{1}{k}\right)=2\\
+      \mathrm{Var}(Weibull(k,\lambda)) &= \lambda^2\left[\Gamma\left(1+\frac{2}{k}\right)-\left(\Gamma\left(1+\frac{1}{k}\right)\right)^2\right]=3\\
+      \Longrightarrow &\lambda^2\Gamma\left(1+\frac{2}{k}\right)=7\\
+      \Longrightarrow &\frac{\left(\Gamma\left(1+\frac{1}{k}\right)\right)^2}{\Gamma\left(1+\frac{2}{k}\right)}=\frac{4}{7}\\
+    \end{align*}
+    Therefore, we can use uniroot function to solve for the value of $k$ numerically
+    <<>>=
+      f_wb <- function(k) gamma(1+1/k)^2/gamma(1+2/k)-4/7
+      wb_k <- uniroot(f_wb,c(0.1,2))$root
+      wb_lambda <- 2/gamma(1+1/wb_k)
+    @
+    From the numerical solution above, we obtain the shape $k$ has value $\Sexpr{round(wb_k,3)}$, and the scale $\lambda$ has value of $\Sexpr{round(wb_lambda,3)}$.
+    \item For log-Normal distribution with location $\mu$ and scale $\sigma$, we have
+      \begin{align*}
+        \mathbf{E}[\log\mathcal{N}(\mu,\sigma)]&=e^{\mu+\sigma^2/2}=2\\
+        \mathrm{Var}(\log\mathcal{N}(\mu,\sigma))&=(e^{\sigma^2}-1)e^{2\mu+\sigma^2}=3\\
+        \Longrightarrow & e^{2\mu+\sigma^2}=4, e^{2\mu+2\sigma^2}=7\\
+        \Longrightarrow & e^{\sigma^2} = \frac{7}{4} ,  \sigma = \sqrt{\log 7 - 2\log 2}, \mu=2\log 2 - \frac{1}{2}\log 7
+      \end{align*}
+      <<echo=FALSE>>=
+        lnorm_mu = 2*log(2)-log(7)/2
+        lnorm_sigma = sqrt(log(7)-2*log(2))
+      @
+      The location $\mu$ of the log-normal distribution is $\Sexpr{round(lnorm_mu,3)}$, and the scale $\sigma$ is $\Sexpr{round(lnorm_sigma,3)}$.
+    \item For negative binomial distribution with $r$ number of failures and succeed probability $p$, we have
+      \begin{align*}
+        \mathbf{E}[NegBinom(r,p)]&=\frac{(1-p)r}{p}= 2\\
+        \mathrm{Var}(NegBinom(r,p))&=\frac{(1-p)r}{p^2}=3\\
+        \Longrightarrow & p = \frac{2}{3} \Longrightarrow r=4
+      \end{align*}
+      <<echo=FALSE>>=
+        nbin_r = 4
+        nbin_p = 2/3
+      @
+      The number of failures in the negative binomial distribution is $\Sexpr{nbin_r}$ with success probability $\Sexpr{round(nbin_p,3)}$.
+  \end{itemize}
+  \item The density functions of log-Normal and Zero-Inflated Poisson are 
+    <<echo=FALSE>>=
+      knitr::read_chunk('s2densities.R')
+    @
+    <<s2densities>>=
+    @
+    The density functions of the above five distributions are plotted below
+    
+    \begin{figure}[H]
+      <<echo=FALSE, dev.args=list(pointsize=8),fig.width=5, fig.height=5>>=
+        x_int = seq(0,10,1)
+        plot(x_int,dnbinom(x_int,nbin_r,nbin_p),lty = 'dotted', pch=16, xlim=c(0,10),ylim=c(0,0.5),xlab = 'X', ylab = 'Density', 
+             main='Comparison of Different Distributions with mean 2 and variance 3')
+        points(x_int,dzip(x_int,zip_lambda,zip_pi), pch = 4,col='violetred4')
+        curve(dgamma(x,gamma_alpha,gamma_beta),add=TRUE,col='red')
+        curve(dweibull(x,wb_k,wb_lambda),add=TRUE,lty=5,col = 'blue')
+        curve(dlognorm(x,lnorm_mu,lnorm_sigma),add=TRUE,lty=4,col ='green4')
+        legend(6,0.5,c('Zero Inflated Poisson','Gamma','Weibull','log-Normal','Negative Binomial'),
+               pch=c(4,NA,NA,NA,16),lty=c(NA,1,5,4,NA),col=c('violetred4','red','blue','green4','black'))
+      @
+      \caption{Comparison of ZIP, Gamma, Weibull, logNormal, and NegBinomial distributions that matches the first two moments, with mean=2 and variance=3}
+    \end{figure}
+  \item The following code will generate the $99\%$ upper quantile for each distribution
+  <<s2q99>>=
+  @
+  \begin{table}[H]
+    \begin{center}
+ <<echo=FALSE>>=
+    colnames(q99) = c('Distribution','99 Upper Quantile')
+    knitr::kable(q99,digits=2,format='latex')
+  @
+  \caption{99 Upper Quantile of 
+        Zero-Inflated Poisson, Gamma, Weibull, log-Normal, 
+        Negative Binomial distributions with mean 2 and variance 3}
+        \end{center}
+  \end{table}
+ 
+  \item To gerate random sample from log-Normal and Zero-Inflated Poisson distributions, we define the following functions
+  <<s2rfunc>>=
+  @
+  The following chunk of code will randomly generate sample of size 20 from respective distributions. Sample means and variances are tabulated below.
+  <<s2sample20>>=
+  @
+  \begin{table}[H]
+  \center
+    <<echo=FALSE>>=
+    colnames(s_mv) = c('Distribution','Sample Mean','Sample Variance')
+    row.names(s_mv) <- NULL
+    knitr::kable(s_mv,digits=2,format='latex')
+    @
+    \caption{Sample mean and sample variance of randomly generated samples from respective distributions of size $\Sexpr{n}$}
+  \end{table}
+  Note that the sample means and sample variances are relatively far from the "true values" of mean $2$ and variance $3$.
+\end{enumerate}
+\newpage
+\subsection*{Data Analysis}
+<<echo=FALSE>>=
+  knitr::read_chunk('s3fruitflies.R')  
+@
+<<s3read,echo=FALSE,message=FALSE>>=
+@
+Before we fit Gamma glm model to the fruitfly dataset, we plot lifetimes vs. activity and thorax respectively to get a general sense of how sexual activity and thorax will effect longevity.
+\begin{figure}[H]
+\centering
+  <<echo=FALSE, dev.args=list(pointsize=10),fig.width=4, fig.height=3>>=
+      plot(fruitfly$activity, fruitfly$longevity,xlab='Sexual Activity',ylab='Longevity')
+  @
+  \caption{How longevity of fruitflies is affected by controlled sexual activities. \\'isolated' = kept solitary, 'one' = one pregnant female per day, 'low' = one virgin female per day, 'many' = eight pregnant females per day, 'high' = eight virgin females per day}
+\end{figure}
+\begin{figure}[H]
+\centering
+  <<echo=FALSE, dev.args=list(pointsize=12),fig.width=5, fig.height=3.5, message=FALSE>>=
+    attach(mtcars)
+    op <- par(mfrow = c(2,3),
+          oma = c(5,4,0,0) + 0.1,
+          mar = c(0,0,1,1) + 0.1)
+    cs = 0
+    for (s in unique(fruitfly$activity)) {
+      plot(fruitfly[fruitfly$activity==s,]$thorax, fruitfly[fruitfly$activity==s,]$longevity,axes=FALSE)
+      axis(side=2,labels = (cs%%3==0))
+      axis(side=1,labels = (cs>=2))
+      box(which="plot",bty="l")
+      cs = cs+1
+    }
+    title(xlab = "Thorax",
+      ylab = "Longevity",
+      outer = TRUE, line = 3)
+par(op)
+  @
+  \caption{How longevity of fruitflies is affected by thorax, controlling for sexual activities. }
+\end{figure}
+Clearly, sexual activity of fruitflies will affect their longevity. To be specific, higher sexual activity will shorten longevity of fruitflies. From Figure 5 above, it is also clear that controlling for sexual activities, the longevity of fruitflies is positively correlated to thorax lenghts. The effect of interaction term between sexual activity and thorax length on longevity of fruitflies is not clear from the plots.\\
+Since the effect of thorax length on longevity of fruitflies is already known, naturally, we are interested in the effect of sexual activity on their longevity controlling for thorax length. To test the effect formally, we first fit a Gamma glm
+<<s3fit,message=FALSE>>=
+@
+\begin{table}[H]
+\centering
+<<echo=FALSE>>=
+ff_glm_table <- rbind(summary(ff_fit)$coef,shape=c(1/summary(ff_fit)$dispersion,NA,NA,NA))
+colnames(ff_glm_table)[4]= 'P val'
+knitr::kable(ff_glm_table,digits=4)
+@
+\caption{Gamma glm fit coefficient results}
+\end{table}
+From the tabulated result above, we see that the intercept and thorax length are highly significant as expeccted. What is interesting is that both low sexual activity and high sexual activity are significant at $\alpha=0.05$ level. This matches with our initial observation.\\
+The coefficients of the Gamma glm can be interpreted as following\\
+\begin{longtable}{p{4cm} p{2cm} p{10cm}}
+$\beta_0=\Sexpr{rownames(ff_glm_table)[1]}$ & $\Sexpr{round(ff_glm_table[1,1],3)}$ & The life expectancy (expected longevity) of a solidary (reference case) fruitfly with average thorax length ($\Sexpr{round(ff_mthorax,3)}$) is $e^{\Sexpr{round(ff_glm_table[1,1],3)}} = \Sexpr{round(exp(ff_glm_table[1,1]),2)}$ days.\\
+\\
+$\beta_{\text{one}}=\Sexpr{rownames(ff_glm_table)[2]}$ & $\Sexpr{round(ff_glm_table[2,1],3)}$ & The life expectancy of a fruitfly kept with one pregnant female  each day will increase by $e^{\Sexpr{round(ff_glm_table[2,1],3)}} = \Sexpr{round(exp(ff_glm_table[2,1]),3)}$ (multiplier), when controlling for thorax length.\\
+\\
+$\beta_{\text{low}}=\Sexpr{rownames(ff_glm_table)[3]}$ & $\Sexpr{round(ff_glm_table[3,1],3)}$ & The life expectancy of a fruitfly kept with one virgin female  each day (low sexual activity) is $e^{\Sexpr{round(ff_glm_table[3,1],3)}} = \Sexpr{round(exp(ff_glm_table[3,1]),3)}$ of the life expectancy of a fruitfly kept solitary, when controlling for thorax length.\\
+\\
+$\beta_{\text{many}}=\Sexpr{rownames(ff_glm_table)[4]}$ & $\Sexpr{round(ff_glm_table[4,1],3)}$ & The life expectancy of a fruitfly kept with eight pregnant female  each day will increase by $e^{\Sexpr{round(ff_glm_table[4,1],3)}} = \Sexpr{round(exp(ff_glm_table[4,1]),3)}$, when controlling for thorax length.\\
+\\
+$\beta_{\text{high}}=\Sexpr{rownames(ff_glm_table)[5]}$ & $\Sexpr{round(ff_glm_table[5,1],3)}$ & The life expectancy of a fruitfly kept with eight virgin female  each day (high sexual activity) is $e^{\Sexpr{round(ff_glm_table[5,1],3)}} = \Sexpr{round(exp(ff_glm_table[5,1]),5)}$ of the life expectancy of a fruitfly kept solitary, when controlling for thorax length.\\
+\\
+$\beta_{\text{thorax}}=\Sexpr{rownames(ff_glm_table)[6]}$ & $\Sexpr{round(ff_glm_table[6,1],3)}$ & The life expectancy of a fruitfly will increase by $e^{\Sexpr{round(ff_glm_table[6,1],6)}} = \Sexpr{round(exp(ff_glm_table[6,1]),3)}$ for per unit increase in the thorax length, when controlling for sexual activities.\\
+\end{longtable}
+To see if the Gamma glm is a good fit to the fruitfly data, we first observe that Residual Deviance of the fitted model is $\Sexpr{round(ff_fit$deviance,3)}$ where the null deviance is as large as $\Sexpr{round(ff_fit$null.deviance,3)}$. Also, from the boot library, we can get some diagnostic information
+<<s3diag>>=
+@
+\begin{figure}[H]
+<<echo=FALSE, dev.args=list(pointsize=12),fig.width=8, fig.height=3.5, message=FALSE>>=
+attach(mtcars)
+par(mfrow=c(1,2))
+plot(log(ff_fit$fitted.values),ff_fit$residuals,xlab='Linear predictor',ylab='Residuals')
+qqnorm(ff_diag$rd,xlab='Ordered deviance residuals',ylab='Quantiles of standard normal')
+abline(0,1)
+@
+\caption{Diagnostic plots of Gamma glm fit on fruitfly data}
+\end{figure}
+From the Residual vs. Linear predictor plot above, we can see that there is no clear pattern in the plot, also the normal-QQ plot shows a very linear line. Both observations confirms that the Gamma glm model is a good fit to the fruitfly data set.\\
+To formally test the hypothesis that \textit{increased sexual activity will decrease life expectancy (expected longevity)}, we need to test the following contrasts simultaneously
+$$H_0: \beta_{\text{low}}-\beta_{\text{one}}=0 \text{ and } \beta_{\text{high}}-\beta_{\text{many}}=\beta_{\text{low}}-\beta_{\text{one}} \, vs.$$
+$$H_a: \beta_{\text{low}}-\beta_{\text{one}}<0 \text{ or } \beta_{\text{high}}-\beta_{\text{many}}<\beta_{\text{low}}-\beta_{\text{one}}$$
+or equivalently,
+$$H_0: \beta_{\text{low}}-\beta_{\text{one}}=0 \text{ and } \beta_{\text{high}}-\beta_{\text{many}}-\beta_{\text{low}}+\beta_{\text{one}}=0 \, vs.$$
+$$H_a: \beta_{\text{low}}-\beta_{\text{one}}<0 \text{ or } \beta_{\text{high}}-\beta_{\text{many}}-\beta_{\text{low}}+\beta_{\text{one}}<0$$
+The following chunck of code will perform the simultaneous contrasts in the hypothesis
+<<s3contrast>>=
+@
+\begin{table}[H]
+\centering
+<<echo=FALSE>>=
+ff_test_r<-data.frame(cbind(ff_test$coefficients,ff_test$sigma,ff_test$tstat,ff_test$pvalues))
+colnames(ff_test_r)<-c('Estimate','Std. Error','t Statistic','P value')
+rownames(ff_test_r)<-c('low - one','high - many - low + one')
+knitr::kable(ff_test_r,digits = 3)
+@
+\caption{contrast results of testing whether increased sexual activity will result in decreased life expectancy of fruitflies}
+\end{table}
+With Bonfferroni correction, we set the significance of individual contrast to $\frac{\alpha}{2}=2.5\%$. For each inidvidual contrast, the p-value is well below the corrected significance level. Therefore, we can reject the null hypothesis with confidence, meaning that $\beta_{\text{high}}-\beta_{\text{many}}<\beta_{\text{low}}-\beta_{\text{one}}<0$. \\
+To give a 95\% confidence interval for each of the contrast, we use
+<<s395ci>>=
+@
+to get that the 95\% confidence interval for $\beta_{\text{low}}-\beta_{\text{one}}$ is $(\Sexpr{round(ff_95ci[1,1],3)},\Sexpr{round(ff_95ci[1,2],3)})$, and the 95\% confidence interval for $\beta_{\text{high}}-\beta_{\text{many}}-\beta_{\text{low}}+\beta_{\text{one}}$ is $(\Sexpr{round(ff_95ci[2,1],3)},\Sexpr{round(ff_95ci[2,2],3)})$.\\
+To summarize, we have shown that sexual activities will decrease life expectancy of fruitflies. In particular, after fixing the effect of thorax length, even low sexual activity will decrease the life expectancy of fruitflies by $\Sexpr{round(1-exp(ff_test$coefficient[1]),3)*100}\%$ on average. Highly frequent sexual activities will decrease the life expectancy of fruitflies by a stunning $\Sexpr{round(1-exp(ff_test$coefficient[2]),3)*100}\%$.
+\newpage
+\section*{Report on American National Youth Tobacco Usage}
+<<echo=FALSE>>==
+source('tobacco.R')
+knitr::read_chunk('tobacco.R')
+@
+\begin{abstract}
+\end{abstract}
+\subsection{Introduction}
+Smoking has been a major health concern for decades for its close association to more than two dozen diseases and conditons, including cancer and heart disease
+\subsection{Methods and Exploratory Analysis}
+\subsubsection{Data Description}
+The data of this research paper comes from the 2014 American National Youth Tobacco Survey. The raw dataset contains observations from 22007 youths aged from 9 to 19, each with 162 variables, including basic demographics data such as age, race, sex, as well as information regarding usage of tobacco. Since the dependent variables (usage of chewing tobacco and hookah) are binary categorical in both primary research hypotheses and the secondary problem of interest, we use binomial GLM, logistic regression in particular, in all cases.\\
+\subsubsection{First Primary Research Hypothesis}
+To test the first research hypothesis, the mean responses for each combination of races of interest and residential conditons are plotted.
+\begin{figure}[H]
+\centering
+<<echo=FALSE, dev.args=list(pointsize=12),fig.width=8, fig.height=4, message=FALSE>>=
+  par(mar=c(7,4,1,1))
+  plot(chewing~group,data = chewing_group_mean,las=2,xlab='')
+@
+\caption{Proportion of chewing tobacco usage in each combination of racial groups and residential conditions among U.S. youths.}
+\end{figure}
+From the figure above, it is obvious that Caucasions are more likely to use chewing tobacco in both rural and urban areas. We also see that not only residential type will affect the overall usage of chewing tobacco, but it also has different effects on different racial groups. Therefore, the regression model will need to incorporate an interaction term between race and residential type. To test the hypothesis formally, we fit the following GLM, denoted as Model 1,
+\begin{align*}Y_i&\sim Bernoulli(\mu_i),\text{where}\\
+\log\left(\frac{\mu_i}{1-\mu_i}\right) &= \beta_0+\beta_1I_b+\beta_2I_h +\beta_3 I_r + \beta_4 I_bI_r + \beta_5 I_hI_r\end{align*}
+where the indicator variables are elucidated in the following table
+\begin{table}[H]
+\begin{subtable}[t]{0.5\linewidth}
+\centering
+  \begin{tabular}{cccc}
+  \toprule
+  Race & $I_b$ & $I_h$\\
+  \midrule
+  White & 0 & 0\\
+  Black & 1 & 0\\
+  Hispanic & 0 & 1\\
+  \bottomrule
+\end{tabular}
+\end{subtable}
+\begin{subtable}[t]{0.5\linewidth}
+\centering
+\begin{tabular}{cc}
+\toprule
+Residential Type & I_r\\
+\midrule
+Urban & 0\\
+Rural & 1\\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\caption{Encoding table of dummy variables for racial groups and residential types in logistic regression model}
+\end{table}
+Under this encoding scheme, the conclusion of white American youths are more likely to use chewing tobacco can be tested if each of the following one-sided hypotheses is rejected: $\beta_1 = 0$, $\beta_2 = 0$, $\beta_1+\beta_4 = 0$, and $\beta_2+\beta_5=0$.\\
+\subsubsection{Second Primary Research Hypothesis}
+To test the second hypothesis of effect of sex on usage of hookah when fixing other demographic characteritics, we first plot the following exploratory analysis to spot any obvious interactions
+\begin{figure}[H]
+\centering
+<<echo=FALSE, dev.args=list(pointsize=16),fig.width=9, fig.height=4, message=FALSE>>=
+  attach(mtcars)
+  par(mfrow=c(1,3),mar=c(4,4,1,1))
+  plot(hookah~age, data = hookah_age_mean[hookah_age_mean$sex=='M',],ylim=c(0,0.7),ylab='hookah proportion',xlab='',pch=4)
+  points(hookah~age, data = hookah_age_mean[hookah_age_mean$sex=='F',],pch=1)
+  legend(14,0.65,c('Male','Female'),pch=c(4,1))
+  mtext('age')
+  par(mar=c(4,2,1,1))
+  plot(-hookah~race, data = hookah_race_mean,ylim=c(0,max(hookah)+0.1),las=2,xlab='',ylab='')
+  points(hookah~race, data = hookah_race_mean[hookah_race_mean$sex=='M',],pch=4)
+  points(hookah~race, data = hookah_race_mean[hookah_race_mean$sex=='F',],pch=1)
+  legend(4,0.36,c('Male','Female'),pch=c(4,1))
+  mtext('race')
+  par(mar=c(4,2,1,1))
+  plot(-hookah~rural, data = hookah_rural_mean,ylim=c(0,0.3),las=2,xlab='',ylab='')
+  points(hookah~rural, data = hookah_rural_mean[hookah_rural_mean$sex=='M',],pch=4)
+  points(hookah~rural, data = hookah_rural_mean[hookah_rural_mean$sex=='F',],pch=1)
+  legend(1.6,0.27,c('Male','Female'),pch=c(4,1))
+  mtext('residential type')
+@
+\caption{Proportion of hookah usage in different age groups, racial groups, and residential types among U.S. youths.}
+\end{figure}
+First, from the figure above, we see anormallies at age of $9$ and $10$. This might be caused by juniors at a very young age are not answering the surveys responsbily, and since there are only $\Sexpr{nrow(smoke2[smoke2$age<=10,])}$ observations from youths between age 9 and 10, we decide to take them out in our study. Furthermore, from the figure above, we do not observe significant interactions between sex and other demographic information, so we do not consider interaction terms in our logistic regression model, denoted as Model 2:
+\begin{align*}Y_i&\sim Bernoulli(\mu_i),\text{where}\\
+\log\left(\frac{\mu_i}{1-\mu_i}\right) &= \beta_0+\beta_1I_f+\beta_2X_a +\beta_3 I_b + \beta_4 I_h + \beta_5 I_a +\beta_6 I_n + \beta_7 I_p + \beta_8 I_r\end{align*}
+where $X_a$ is the covariate variable of Age, and the indicator variables are elucidated in the following table
+\begin{table}[H]
+\begin{subtable}[t]{0.25\linewidth}
+\centering
+\begin{tabular}{cc}
+\toprule
+Sex & I_f\\
+\midrule
+Male & 0\\
+Female & 1\\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\begin{subtable}[t]{0.4\linewidth}
+\centering
+  \begin{tabular}{cccccc}
+  \toprule
+  Race & $I_b$ & $I_h$ & $I_a$ & $I_n$ & $I_p$\\
+  \midrule
+  White & 0 & 0 & 0 & 0 & 0\\
+  Black & 1 & 0 & 0 & 0 & 0\\
+  Hispanic & 0 & 1 & 0 & 0 & 0\\
+  Asian & 0 & 0 & 1 & 0 & 0\\
+  Native & 0 & 0 & 0 & 1 & 0\\
+  Pacific & 0 & 0 & 0 & 0 & 1\\
+  \bottomrule
+\end{tabular}
+\end{subtable}
+\begin{subtable}[t]{0.25\linewidth}
+\centering
+\begin{tabular}{cc}
+\toprule
+Residential Type & I_r\\
+\midrule
+Urban & 0\\
+Rural & 1\\
+\bottomrule
+\end{tabular}
+\end{subtable}
+\caption{Encoding table of dummy variables for racial groups and residential types in logistic regression model}
+\end{table}
+Under this model, our hypothesis of interest can be tested with $H_0: \beta_1=0$ vs. $H_a: \beta_1\ne 0$. \\
+\subsubsection{Quantifying Chewing Tobacco Usage}
+To quantify how chewing tobacco changes with age, sex, and racial group, we use a very similar model as above, denoted as Model 3:
+\begin{align*}Y_i&\sim Bernoulli(\mu_i),\text{where}\\
+\log\left(\frac{\mu_i}{1-\mu_i}\right) &= \beta_0+\beta_1I_f+\beta_2X_a +\beta_3 I_b + \beta_4 I_h + \beta_5 I_a +\beta_6 I_n + \beta_7 I_p \end{align*}
+where $X_a$ is the covariate variable of Age, and the indicator variables follow exactly the same definition from the the previous model. Also note that since we are interested in the actual level of odds ratios, we shift Age to have zero at $11$.
+\subsection{Results and Discussion}
+\subsubsection{First Primary Research Hypothesis}
+The tabulated R results are listed below
+\begin{table}[H]
+\centering
+<<echo=FALSE>>=
+  smoke1_df <- summary(smoke1_fit)$coef
+  colnames(smoke1_df)[4] <- 'p val'
+  knitr::kable(smoke1_df,digits = 3)
+@
+\caption{Coefficient summary of Model 1 fit}
+\end{table}
+From the table above, we notice that every term is significant with at a level of $\alpha=0.05$, which means the usage of tobacco is significantly related to both racial group (among White, Black and Hispanic population) and residential type. In particular, since the coefficients of interaction terms are also negative, living in rural areas will enlarge the effect of racial identities on tobacco usage. \\
+For Caucasians living in urban area, the odds of using chewing tobacco is $\Sexpr{round(exp(smoke1_fit$coefficients[1]),3)}$. More importantly, the odds ratio between urban Black and Hispanic Americans compared to White Americans is $\Sexpr{round(exp(smoke1_fit$coefficients[2]),3)}$ and $\Sexpr{round(exp(smoke1_fit$coefficients[3]),3)}$, repectively. In rural areas, the odds ratio between Black and Hispanic Americans compared to White Americans is $\Sexpr{round(exp(smoke1_fit$coefficients[5]+smoke1_fit$coefficients[2]),3)}$ and $\Sexpr{round(exp(smoke1_fit$coefficients[6]+smoke1_fit$coefficients[3]),3)}$, repectively. In both cases, the odds ratios are significantly less than 1. The odds of using chewing tobacco of possible combinations of racial groups and residential types are listed below:
+\begin{table}[H]
+\centering
+<<echo=FALSE>>=
+  knitr::kable(smoke1_odds,digits=3)
+@
+\caption{Odds of chewing tobacco usage of American youths}
+\end{table}
+The results of contracts outlined in section 2.2 are tabulated below
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r|r|r|r|r|r}
+\toprule
+ & Estimate &Std. Error & t stat. & p val. & 95\% CI lower & 95\% CI upper\\
+ \midrule
+$\beta_1$ & \Sexpr{ round(summary(smoke1_ctrst)$test$coefficient[1],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$sigma[1],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$tstat[1],3)} & \Sexpr{ round(2*pnorm(summary(smoke1_ctrst)$test$tstat[1]),3)} & \Sexpr{ round(smoke1_95ci[1,1],3)} & \Sexpr{ round(smoke1_95ci[1,2],3)}\\
+$\beta_2$ & \Sexpr{ round(summary(smoke1_ctrst)$test$coefficient[2],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$sigma[2],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$tstat[2],3)} & \Sexpr{ round(2*pnorm(summary(smoke1_ctrst)$test$tstat[2]),3)} & \Sexpr{ round(smoke1_95ci[2,1],3)} & \Sexpr{ round(smoke1_95ci[2,2],3)}\\
+$\beta_1+\beta_4$ & \Sexpr{ round(summary(smoke1_ctrst)$test$coefficient[3],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$sigma[3],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$tstat[3],3)} & \Sexpr{ round(2*pnorm(summary(smoke1_ctrst)$test$tstat[3]),3)} & \Sexpr{ round(smoke1_95ci[3,1],3)} & \Sexpr{ round(smoke1_95ci[3,2],3)}\\
+$\beta_2+\beta_5$ & \Sexpr{ round(summary(smoke1_ctrst)$test$coefficient[4],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$sigma[4],3)} & \Sexpr{ round(summary(smoke1_ctrst)$test$tstat[4],3)} & \Sexpr{ round(2*pnorm(summary(smoke1_ctrst)$test$tstat[4]),3)} & \Sexpr{ round(smoke1_95ci[4,1],3)} & \Sexpr{ round(smoke1_95ci[4,2],3)}\\
+\bottomrule
+\end{tabular}
+\caption{Linear contrasts of model pamameters showing Caucasian Americans are more likely to use chewing tobacco in comparison to African and Hispanic Americans, in both urban and rural settings}
+\end{table}
+From table above, all the test contrasts are significantly lower than $0$. This concludes that we can safely reject the first research hypothesis, i.e. usage of chewing tobacco is in fact more common amongst Americans of European ancestry than for Hispanic-Americans and African-Americans, even after accounting for the fact that white Americans more likely to live in rural areas and chewing tobacco is a rural phenomenon.
+
+\subsubsection{Second Primary Research Hypothesis}
+The coefficients of glm in Model 2 are summarized in the table below
+\begin{table}[H]
+\centering
+<<echo=FALSE>>=
+  smoke2_summary <- summary(smoke2_fit)$coefficient
+  colnames(smoke2_summary)[4] = 'p val.'
+  knitr::kable(summary(smoke2_fit)$coefficient,digits=3)
+@
+\caption{Coefficient summary of Model 2 fit}
+\end{table}
+Our second search hypothesis focuses on the effect of gender on usage of hookah. From the results of Model 2 coefficients above, we can see that while controlling for other demographic variables, the p-value of $\beta_1$ is $\Sexpr{round(smoke2_summary[2,4],3)}$, which is substantially larger than the normal significance level of $\alpha=0.05$. The 95\% confidence interval for $\beta_1$ is $(\Sexpr{round(smoke2_summary[2,1]+qnorm(0.025)*smoke2_summary[2,2],3)},\Sexpr{round(smoke2_summary[2,1]+qnorm(0.975)*smoke2_summary[2,2],3)})$. This means that the effect of gender is not significant statistically. Therefore, reject the null hypothesis of $\beta_1=0$ at $0.05$ significance level. This means that the likelihood of having used a hookah on at least one occasion is not significantly different for two individuals of different sexes, provided their age, ethnicity, and residential conditions are similar.
+\subsubsection{Quantifying Chewing Tobacco Usage}
+In previous section, we have already shown that white Americans are more likely to use chewing tobacco relative to African and Hispanic Americans. In this section, we will include more ethnic groups as well as the effect of gender and age to quantify the use of chewing tobacco. The effect of each variable on the usage of chewing tobacco is plotted first. Since chewing tobacco data suffer from the same anomalies with youths of age $9$ and $10$, we exclude them from our analysis
+\begin{figure}[H]
+\centering
+<<echo=FALSE, dev.args=list(pointsize=16),fig.width=9, fig.height=4, message=FALSE>>=
+  attach(mtcars)
+  par(mfrow=c(1,3),mar=c(4,4,1,1))
+  plot(chewing~age, data = chewing_age_mean,ylab='Chewing tobacco proportion',xlab='',pch=4)
+  mtext('age')
+  par(mar=c(4,2,1,1))
+  plot(-chewing~race, data = chewing_race_mean,ylim=c(0,max(chewing)+0.03),las=2,xlab='',ylab='')
+  points(chewing~race, data = chewing_race_mean,pch=4)
+  mtext('race')
+  par(mar=c(4,2,1,1))
+  plot(-chewing~sex, data = chewing_sex_mean,ylim=c(0,max(chewing)+0.02),las=2,xlab='',ylab='')
+  points(chewing~sex, data = chewing_sex_mean,pch=4)
+  mtext('Sex')
+@
+\caption{Proportion of chewing tobacco usage in different age groups, racial groups, and sexes among U.S. youths.}
+\end{figure}
+From the figure above, we can identify that the usage of chewing tobacco increases as age increases; amongst different ethnic groups, Pacific Islander Americans are the heaviest chewing tobacco users, and Caucasian Americans and Native Americans also use more chewing tobacco than Black, Hispanic, and Asian Americans. Also, chewing tobacco usage is much more common among males than females. To further quantify the odds of chewing tobacco usage, the coefficients of Model 3 fit are tabulated below in Table 12
+\begin{table}[H]
+\centering
+<<echo=FALSE>>=
+  smoke3_summary <- summary(smoke3_fit)$coef
+  colnames(smoke3_summary)[4] = 'p val.'
+  knitr::kable(smoke3_summary,digits=3)
+@
+\caption{Coefficient summary of Model 3 fit}
+\end{table}
+From the table above, we can calculate that a 11 year-old White male has an odds of $\Sexpr{round(exp(smoke3_summary[1,1]),3)}$ of using chewing tobacco. Controlling for other variables, females have an odds ratio of $\Sexpr{round(exp(smoke3_summary[2,1]),3)}$ to males; the odds will increase by a ratio of $\Sexpr{round(exp(smoke3_summary[3,1]),3)}$ per year increase in age. As for racial groups, the odds ratio of using chewing tobacco of a Black, a Hispanic, an Asian, and a Pacific Islander American raltive to a White American is $\Sexpr{round(exp(smoke3_summary[4,1]),3)}$, $\Sexpr{round(exp(smoke3_summary[5,1]),3)}$, $\Sexpr{round(exp(smoke3_summary[6,1]),3)}$, and $\Sexpr{round(exp(smoke3_summary[8,1]),3)}$ respectively. There is not a significant difference between a White American and a Native American in terms of chewing tobacco usage.
+
+\printbibliography
+ 
+\end{document}
