@@ -503,4 +503,7 @@ From the table above, we can calculate that a 11 year-old White male has an odds
 Chewing tobacco has been proven to be a rural phenomenon, and white Americans are more likely to live in rural areas. This has been the explaination of why white Americans have been pictured as heavier chewing tobacco users. However, in this paper, we have shown that even after considering the difference between living in urban or rural areas, white Americans are still more likely to use chewing tobacco in comparason to Hispanic and black Americans. \\
 In this paper, we have a also discovered that the usage of hookah, a type of water pipe tobacco, is approximately the same among male and female youth population.\\
 Last but not least, males are more likely to use chewing tobacco, and the usage of chewing tobacco increases with age. Also, Pacific Islanders are the heaviest chewing tobacco users, and then it comes white Americans and Native Americans. Asian Americans, Black Americans, and Hispanic Americans use the least amount of chewing tobacco.
+\subsection*{Appendix}
+<<tobacco,eval=FALSE>>=
+@
 \end{document}
