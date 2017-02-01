@@ -1,19 +1,4 @@
 \documentclass[12pt]{article}
-\usepackage{hyperref}
-\usepackage[backend=bibtex, sorting=none]{biblatex}
-\bibliography{references}
- 
-\begin{filecontents*}{references.bib}
-@Manual{knitr2013,
-    title = {knitr: A general-purpose package for dynamic report
-      generation in R},
-    author = {Yihui Xie},
-    year = {2013},
-    note = {R package version 1.4.1},
-    url = {http://yihui.name/knitr/},
-  }
-\end{filecontents*}
-
 \usepackage[margin=1in]{geometry}
 \usepackage{amsmath,amsthm,amssymb,amsfonts,bbm}
 \usepackage{float}
@@ -191,7 +176,7 @@ From the figure above, the distribution of the likelihood ratio is very close to
 <<echo=FALSE>>=
   knitr::read_chunk('s3fruitflies.R')  
 @
-<<s3read,echo=FALSE,message=FALSE>>=
+<<s3read,echo=FALSE,message=FALSE,warning=FALSE>>=
 @
 Before we fit Gamma glm model to the fruitfly dataset, we plot lifetimes vs. activity and thorax respectively to get a general sense of how sexual activity and thorax will effect longevity.
 \begin{figure}[H]
@@ -291,15 +276,28 @@ To give a 95\% confidence interval for each of the contrast, we use
 to get that the 95\% confidence interval for $\beta_{\text{low}}-\beta_{\text{one}}$ is $(\Sexpr{round(ff_95ci[1,1],3)},\Sexpr{round(ff_95ci[1,2],3)})$, and the 95\% confidence interval for $\beta_{\text{high}}-\beta_{\text{many}}-\beta_{\text{low}}+\beta_{\text{one}}$ is $(\Sexpr{round(ff_95ci[2,1],3)},\Sexpr{round(ff_95ci[2,2],3)})$.\\
 To summarize, we have shown that sexual activities will decrease life expectancy of fruitflies. In particular, after fixing the effect of thorax length, even low sexual activity will decrease the life expectancy of fruitflies by $\Sexpr{round(1-exp(ff_test$coefficient[1]),3)*100}\%$ on average. Highly frequent sexual activities will decrease the life expectancy of fruitflies by a stunning $\Sexpr{round(1-exp(ff_test$coefficient[2]),3)*100}\%$.
 \newpage
+\subsection*{Discussion}
+In the paper "Statistical Modelling: The Two Cultures", Breiman describes two distinct approaches towards the analysis of data. The first approach leans towards traditional statistics, which utilizes model's mechanism as an approximation of nature's mechanism, to delineate the fundamental underlying relationship of how the data is generated, and makes predictions based on the hypotheses. The other approach is through algorithmic modelling, which tries to find a useful algorithm to predict the response from a black-box approach, instead of approximating the actual relationship between predictor and response.\\
+The question we may be asked about is that, as statisticians, under what situations, should we consider the first approach over the second. For our three research questions in the tobacco usage study, we focus on the relationships between response variables and predictors. While the algorithmic modelling approach only concerns about the prediction, it fails to provide us with the understanding of how different characteristics of an individual will effect his/her likelihood of tobacco usage. On the other hand, the data modelling approach will aid us to capture this relationship, which makes it more suitable for these research questions.\\
+As for model selection, since the three response variables in our questions are all binary variables, it is natural to use logistic regression in all three models. To avoid overfitting to in-sample data, and to capture the real underlying relationship without being susceptible to erros, we limit the independent variables to only the ones the research questions concern. For the first research hypothesis, since the exploratory study on the dataset shows an increased effect of ethnic group in rural areas in comparison to that in urban areas, we include the interaction term between race and living area in our model, along with the two original variables. While our three research questions involve only a few predictors, according to Breiman, logistic regression should "present a simple and clear picture of nature's mechanism".\\
+The next question that Breiman may have is how good is the fit of the model. In the plot of deviance residuals against the linear predictors, there is no evidence of nonlinearity. And the variances are also roughly constant. So the logistic models we have explored in the paper seem to be a good representation of thhe data. However, we have to keep in mind that, according to Breiman, goodness-of-fit tests and residual analysis are not quite reliable in the high dimensional case. On the other hand, Cox thinks that, sometimes, the goodness-of-fit of models may be of paramount importance, as he says that "quite often, the limitations of conclusions lie more in weakness of data quality and study design than in ineffective analysis".
+\newpage
 \section*{Report on American National Youth Tobacco Usage}
 <<echo=FALSE>>==
 source('tobacco.R')
 knitr::read_chunk('tobacco.R')
 @
 \begin{abstract}
+Smoking among youths of America has been an increasingly serious issue. In this paper, we study the usage of tobacco in alternative forms other than cigarrettes and cigars. In particular, we are interested in how sex, ethnic group, residential type, and age affect the usage of chewing tobacco and hookah among junior Americans. In this paper we have shown that white Americans are heavy chewing tobacco users, and hookah usage is not related to sex.
 \end{abstract}
 \subsection{Introduction}
-Smoking has been a major health concern for decades for its close association to more than two dozen diseases and conditons, including cancer and heart disease
+Smoking has been a major health concern for decades for its close association to more than two dozen diseases and conditons, including cancer and heart disease. More vulnerable to its deadly effects, tobacco usage among the youths is even more detrimental to American's well-being. Tobacco use is started and established primarily during adolescence - nearly 9 out of 10 cigarette smokers first tried smoking by age 18, and 99\% first tried smoking by age 26. Preventing tobacco use among youth is critical to ending the tobacco epidemic in the U.S. Other than cigarrettes, many alternative forms of use of tobacco exist, each proven to lead to serious health issues. In this paper, we will investigate the usage of chewing tobacco and water pipe, also known as 'hookah' among American youths. In particular, we are intersted in the following research questions:
+\begin{itemize}
+\item[--] Regular use of chewing tobacco is no more common amongst Americans of European ancestry than for Hispanic-Americans and African-Americans, once one accouts for the fact that white Americans more likely to live in rural areas and chewing tobacco is a rural phenomenon.
+\item[--] The likelihood of having used a hookah or waterpipe on at least one occasion is the same for two individuals of the different sexes, provided their age, eithnicity, and other demographic characteristics are similar. 
+\end{itemize}
+As a secondary problem, this paper is also interested in quantifying how the use of chewing tobacco changes with age, sex, and ethnic group.
+
 \subsection{Methods and Exploratory Analysis}
 \subsubsection{Data Description}
 The data of this research paper comes from the 2014 American National Youth Tobacco Survey. The raw dataset contains observations from 22007 youths aged from 9 to 19, each with 162 variables, including basic demographics data such as age, race, sex, as well as information regarding usage of tobacco. Since the dependent variables (usage of chewing tobacco and hookah) are binary categorical in both primary research hypotheses and the secondary problem of interest, we use binomial GLM, logistic regression in particular, in all cases.\\
@@ -334,7 +332,7 @@ where the indicator variables are elucidated in the following table
 \centering
 \begin{tabular}{cc}
 \toprule
-Residential Type & I_r\\
+Residential Type & $I_r$\\
 \midrule
 Urban & 0\\
 Rural & 1\\
@@ -379,7 +377,7 @@ where $X_a$ is the covariate variable of Age, and the indicator variables are el
 \centering
 \begin{tabular}{cc}
 \toprule
-Sex & I_f\\
+Sex & $I_f$\\
 \midrule
 Male & 0\\
 Female & 1\\
@@ -405,7 +403,7 @@ Female & 1\\
 \centering
 \begin{tabular}{cc}
 \toprule
-Residential Type & I_r\\
+Residential Type & $I_r$\\
 \midrule
 Urban & 0\\
 Rural & 1\\
@@ -463,9 +461,9 @@ The coefficients of glm in Model 2 are summarized in the table below
 \begin{table}[H]
 \centering
 <<echo=FALSE>>=
-  smoke2_summary <- summary(smoke2_fit)$coefficient
+  smoke2_summary <- summary(smoke2_fit)$coef
   colnames(smoke2_summary)[4] = 'p val.'
-  knitr::kable(summary(smoke2_fit)$coefficient,digits=3)
+  knitr::kable(smoke2_summary,digits=3)
 @
 \caption{Coefficient summary of Model 2 fit}
 \end{table}
@@ -501,7 +499,8 @@ From the figure above, we can identify that the usage of chewing tobacco increas
 \caption{Coefficient summary of Model 3 fit}
 \end{table}
 From the table above, we can calculate that a 11 year-old White male has an odds of $\Sexpr{round(exp(smoke3_summary[1,1]),3)}$ of using chewing tobacco. Controlling for other variables, females have an odds ratio of $\Sexpr{round(exp(smoke3_summary[2,1]),3)}$ to males; the odds will increase by a ratio of $\Sexpr{round(exp(smoke3_summary[3,1]),3)}$ per year increase in age. As for racial groups, the odds ratio of using chewing tobacco of a Black, a Hispanic, an Asian, and a Pacific Islander American raltive to a White American is $\Sexpr{round(exp(smoke3_summary[4,1]),3)}$, $\Sexpr{round(exp(smoke3_summary[5,1]),3)}$, $\Sexpr{round(exp(smoke3_summary[6,1]),3)}$, and $\Sexpr{round(exp(smoke3_summary[8,1]),3)}$ respectively. There is not a significant difference between a White American and a Native American in terms of chewing tobacco usage.
-
-\printbibliography
- 
+\section*{Summary}
+Chewing tobacco has been proven to be a rural phenomenon, and white Americans are more likely to live in rural areas. This has been the explaination of why white Americans have been pictured as heavier chewing tobacco users. However, in this paper, we have shown that even after considering the difference between living in urban or rural areas, white Americans are still more likely to use chewing tobacco in comparason to Hispanic and black Americans. \\
+In this paper, we have a also discovered that the usage of hookah, a type of water pipe tobacco, is approximately the same among male and female youth population.\\
+Last but not least, males are more likely to use chewing tobacco, and the usage of chewing tobacco increases with age. Also, Pacific Islanders are the heaviest chewing tobacco users, and then it comes white Americans and Native Americans. Asian Americans, Black Americans, and Hispanic Americans use the least amount of chewing tobacco.
 \end{document}
